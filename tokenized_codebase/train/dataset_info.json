@@ -1,0 +1,52 @@
+{
+  "builder_name": "text",
+  "citation": "",
+  "config_name": "default",
+  "dataset_name": "text",
+  "dataset_size": 51320,
+  "description": "",
+  "download_checksums": {
+    "C:/Users/HP/Documents/work/irembo-test/irembo-v2/src/iremboAI/combined_codebase.txt": {
+      "num_bytes": 48406,
+      "checksum": null
+    }
+  },
+  "download_size": 48406,
+  "features": {
+    "text": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "input_ids": {
+      "feature": {
+        "dtype": "int32",
+        "_type": "Value"
+      },
+      "_type": "Sequence"
+    },
+    "attention_mask": {
+      "feature": {
+        "dtype": "int8",
+        "_type": "Value"
+      },
+      "_type": "Sequence"
+    }
+  },
+  "homepage": "",
+  "license": "",
+  "size_in_bytes": 99726,
+  "splits": {
+    "train": {
+      "name": "train",
+      "num_bytes": 51320,
+      "num_examples": 1456,
+      "dataset_name": "text"
+    }
+  },
+  "version": {
+    "version_str": "0.0.0",
+    "major": 0,
+    "minor": 0,
+    "patch": 0
+  }
+}
