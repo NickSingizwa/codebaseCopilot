@@ -27,13 +27,13 @@ data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 training_args = TrainingArguments(
     output_dir='./results',              
     overwrite_output_dir=True,           
-    num_train_epochs=1,                  # number of times the entire training dataset is passed through the model during training.
+    num_train_epochs=2,                  # number of times the entire training dataset is passed through the model during training.
     per_device_train_batch_size=2,       # training examples that are processed together in a single iteration.
     save_steps=20000,                    # save checkpoint every 20,000 steps
     save_total_limit=2,                  # limit the total amount of checkpoints
     prediction_loss_only=True,           # only calculate the prediction loss
-    logging_dir='./logs',            
-    logging_steps=5, 
+    # logging_dir='./logs',            
+    # logging_steps=5, 
 )
 
 # Initialize Trainer
