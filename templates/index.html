@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Codebase Copilot</title>
+    <title>Js Codebase Copilot</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         body {
@@ -38,16 +38,23 @@
             border-radius: 4px;
             resize: vertical;
         }
-        input[type="submit"] {
-            background-color: #007BFF;
-            color: white;
+        input[type="submit"], input[type="file"] {
             padding: 10px 20px;
-            border: none;
+            border: 1px solid #007BFF;
             border-radius: 4px;
             cursor: pointer;
+            margin: 10px 0;
         }
-        input[type="submit"]:hover {
+        input[type="submit"]{
+            background-color: #007BFF;
+            color: white;
+        }
+        input[type="submit"]:hover{
             background-color: #0056b3;
+        }
+        input[type="submit"]:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         #response {
             background-color: #fff;
@@ -64,11 +71,11 @@
         }
         #loader {
             display: none;
-            border: 8px solid #f3f3f3;
-            border-top: 8px solid #007BFF;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #007BFF;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 30px;
+            height: 30px;
             animation: spin 2s linear infinite;
             margin: 10px auto;
         }
@@ -80,11 +87,17 @@
 </head>
 <body>
     <div>
-        <h1>Codebase Copilot</h1>
+        <h1>Javascript Codebase Copilot</h1>
+        <form id="upload-form" enctype="multipart/form-data">
+            <label for="file">Upload your codebase (only .zip files are allowed):</label><br>
+            <input type="file" id="file" name="file" accept=".zip" required><br><br>
+            <input type="submit" value="Upload" id="upload-submit" disabled>
+            <div id="loader"></div>
+        </form>
         <form id="query-form">
             <label for="query">Enter your question:</label><br>
             <textarea id="query" name="query" required></textarea><br><br>
-            <input type="submit" value="Submit">
+            <input type="submit" value="Submit" id="query-submit" disabled>
             <div id="loader"></div>
         </form>
         <h2>Response:</h2>
@@ -92,20 +105,70 @@
     </div>
     <script>
         $(document).ready(function() {
+            // Check if file is selected and enable upload button
+            $('#file').on('change', function() {
+                if ($(this).val()) {
+                    $('#upload-submit').prop('disabled', false);
+                } else {
+                    $('#upload-submit').prop('disabled', true);
+                }
+            });
+
+            // Enable submit button when file is uploaded and query input isn't empty
+            function checkQueryForm() {
+                if ($('#query').val() && uploadSuccess) {
+                    $('#query-submit').prop('disabled', false);
+                } else {
+                    $('#query-submit').prop('disabled', true);
+                }
+            }
+
+            // Track if upload was successful
+            let uploadSuccess = false;
+
+            $('#upload-form').on('submit', function(event) {
+                event.preventDefault();
+                let formData = new FormData(this);
+                $('#loader').show();
+                $.ajax({
+                    url: '/upload',
+                    method: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(data) {
+                        alert(data.success);
+                        $('#loader').hide();
+                        uploadSuccess = true;
+                        checkQueryForm(); // Check if query form can be enabled
+                    },
+                    error: function() {
+                        alert('An error occurred. Please try again.');
+                        $('#loader').hide();
+                        uploadSuccess = false;
+                    }
+                });
+            });
+
+            // Check query input and upload status
+            $('#query').on('input', function() {
+                checkQueryForm();
+            });
+
             $('#query-form').on('submit', function(event) {
                 event.preventDefault();
-                $('#loader').show(); // Show loader
+                $('#loader').show();
                 $.ajax({
                     url: '/ask',
                     method: 'POST',
                     data: { query: $('#query').val() },
                     success: function(data) {
                         $('#response').text(data.response);
-                        $('#loader').hide(); // Hide loader
+                        $('#loader').hide();
                     },
                     error: function() {
                         $('#response').text('An error occurred. Please try again.');
-                        $('#loader').hide(); // Hide loader
+                        $('#loader').hide();
                     }
                 });
             });

@@ -1,7 +1,7 @@
 import os
 import json
 import zipfile
-from flask import Flask, request, render_template, jsonify, session
+from flask import Flask, request, render_template, jsonify
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 from dotenv import load_dotenv
@@ -17,7 +17,6 @@ client = OpenAI(
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.secret_key = os.urandom(24)  # To use Flask sessions
 
 def read_combined_codebase(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -73,8 +72,6 @@ def upload():
     if file and file.filename.endswith('.zip'):
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(file_path)
-
-        session.clear()
         # Unzip the file
         with zipfile.ZipFile(file_path, 'r') as zip_ref:
             zip_ref.extractall(app.config['UPLOAD_FOLDER'])
@@ -88,7 +85,6 @@ def upload():
         embeddings_file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'embeddings.json')
         with open(embeddings_file_path, 'w', encoding='utf-8') as f:
             json.dump(embeddings, f)
-        # session['embeddings'] = embeddings
         return jsonify({'success': 'File successfully uploaded and processed'})
     else:
         return jsonify({'error': 'Only .zip files are allowed'})
@@ -96,24 +92,16 @@ def upload():
 @app.route('/ask', methods=['POST'])
 def ask():
     query = request.form['query']
-    if 'history' not in session:
-        session['history'] = []
-    session['history'].append({'role': 'user', 'content': query})
     embeddings_file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'embeddings.json')
     with open(embeddings_file_path, 'r', encoding='utf-8') as f:
         embeddings = json.load(f)
-    # embeddings = session.get('embeddings')
-    if not embeddings:
-        return jsonify({'response': 'Embeddings not found. Please upload a codebase first.'})
-    codex_prompt = generate_codex_prompt(query, embeddings, session['history'])
+    codex_prompt = generate_codex_prompt(query, embeddings)
     response = ask_codex(codex_prompt)
-    session['history'].append({'role': 'assistant', 'content': response})
     return jsonify({'response': response})
 
-def generate_codex_prompt(query, embeddings, history):
+def generate_codex_prompt(query, embeddings):
     relevant_chunks = find_relevant_chunks(query, embeddings)
-    context = "\n".join([f"{h['role']}: {h['content']}" for h in history])
-    prompt = f"Context:\n{context}\n{'\n'.join(relevant_chunks)}\n\nQuestion: {query}\nAnswer:"
+    prompt = f"Context:\n{'\n'.join(relevant_chunks)}\n\nQuestion: {query}\nAnswer:"
     return prompt
 
 if __name__ == '__main__':
