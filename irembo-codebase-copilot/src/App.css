@@ -1,0 +1,124 @@
+body {
+  background-color: #333;
+  color: rgba(255, 255, 255, 0.708);
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+
+h1 {
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 1.5em;
+  font-style: italic;
+}
+
+.App{
+  width: 35vw;
+}
+
+form {
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+label,h4 {
+  font-weight: semi-bold;
+}
+
+textarea {
+  width: 96%;
+  height: 80px;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 4px;
+  resize: vertical;
+  border: none;
+  background-color: rgba(0, 0, 0, 0.466);
+  color: white;
+}
+
+textarea:focus {
+  outline: none;
+}
+
+button, input[type="file"] {
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 10px 0;
+}
+
+input[type="file"] {
+  border: 1px solid rgb(83, 83, 83);
+  width: 92%;
+}
+
+button{
+  background-color: rgb(39, 37, 37);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+button:hover {
+  background-color: rgba(39, 37, 37, 0.728);
+}
+
+button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+#response {
+  border: 1px solid rgb(83, 83, 83);
+  padding: 20px;
+  border-radius: 4px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  white-space: pre-wrap;
+  width: 93%;
+  max-width: 600px;
+  max-height: 300px;
+  overflow-y: auto;
+  /* color: white; */
+}
+
+.loader {
+  border: 2px solid #333;
+  border-top: 4px solid #ffffff97;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+  margin: 0 2em;
+  display: flex;
+}
+
+.loader-submit{
+  display: flex;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#response pre {
+  background-color: rgba(0, 0, 0, 0.466);
+  padding: 10px;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+#response code {
+  font-family: monospace;
+  color: #d63384;
+}

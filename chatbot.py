@@ -1,7 +1,7 @@
 import os
 import json
 import zipfile
-from flask import Flask, request, render_template, jsonify, session
+from flask import Flask, request, render_template, jsonify, session, send_from_directory
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 from dotenv import load_dotenv
@@ -16,6 +16,7 @@ client = OpenAI(
 )
 
 app = Flask(__name__)
+app = Flask(__name__, static_folder='./irembo-codebase-copilot/dist', static_url_path='/')
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.secret_key = os.urandom(24)  # To use Flask sessions
 
@@ -60,8 +61,9 @@ def find_relevant_chunks(query, embeddings, top_n=3):
     return [chunk['text'] for _, chunk in relevant_chunks]
 
 @app.route('/')
-def home():
-    return render_template('index.html')
+def serve():
+    # return render_template('index.html')
+    return send_from_directory(app.static_folder, 'index.html')
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -95,7 +97,9 @@ def upload():
 
 @app.route('/ask', methods=['POST'])
 def ask():
-    query = request.form['query']
+    data = request.get_json()
+    query = data.get('query')
+    # query = request.form['query']
     if 'history' not in session:
         session['history'] = []
     session['history'].append({'role': 'user', 'content': query})
@@ -108,7 +112,33 @@ def ask():
     codex_prompt = generate_codex_prompt(query, embeddings, session['history'])
     response = ask_codex(codex_prompt)
     session['history'].append({'role': 'assistant', 'content': response})
+
+    # Format the response with code blocks
+    # formatted_response = format_response_with_code(response)
+    # return jsonify({'response': formatted_response})
+
     return jsonify({'response': response})
+
+def format_response_with_code(response):
+    lines = response.split('\n')
+    in_code_block = False
+    formatted_lines = []
+
+    for line in lines:
+        if line.strip().startswith('```'):
+            if in_code_block:
+                formatted_lines.append('</code></pre>')
+                in_code_block = False
+            else:
+                formatted_lines.append('<pre><code class="language-javascript">')
+                in_code_block = True
+        else:
+            formatted_lines.append(line)
+
+    if in_code_block:
+        formatted_lines.append('</code></pre>')
+
+    return '\n'.join(formatted_lines)
 
 def generate_codex_prompt(query, embeddings, history):
     relevant_chunks = find_relevant_chunks(query, embeddings)
@@ -119,4 +149,4 @@ def generate_codex_prompt(query, embeddings, history):
 if __name__ == '__main__':
     if not os.path.exists(app.config['UPLOAD_FOLDER']):
         os.makedirs(app.config['UPLOAD_FOLDER'])
-    app.run(debug=True)
+    app.run(debug=False)
