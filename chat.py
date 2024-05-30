@@ -157,8 +157,8 @@ def main():
     if st.session_state.processing_file:
         st.info("Processing the uploaded file. Please wait...")
     elif st.session_state.file_uploaded or os.path.exists(embeddings_file_path):
-        # query = st.text_input('Enter your prompt:', key='query', on_change=lambda: st.session_state.update(ask_disabled=not st.session_state.query.strip()))
-        query = st.text_area('Enter your prompt:', key='query', height=70, on_change=lambda: st.session_state.update(ask_disabled=not st.session_state.query.strip()))
+        query = st.text_input('Enter your prompt:', key='query', on_change=lambda: st.session_state.update(ask_disabled=not st.session_state.query.strip()))
+        # query = st.text_area('Enter your prompt:', key='query', height=70, on_change=lambda: st.session_state.update(ask_disabled=not st.session_state.query.strip()))
         ask_button = st.button('Ask', key='ask', disabled=not st.session_state.query.strip())
 
         if ask_button:
