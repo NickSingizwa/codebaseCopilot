@@ -82,7 +82,13 @@ def format_response_with_code(response):
 def generate_codex_prompt(query, embeddings, history):
     relevant_chunks = find_relevant_chunks(query, embeddings)
     context = "\n".join([f"{h['role']}: {h['content']}" for h in history])
-    prompt = f"Context:\n{context}\n{'\n'.join(relevant_chunks)}\n\nQuestion: {query}\nAnswer:"
+    # prompt = f"Context:\n{context}\n{'\n'.join(relevant_chunks)}\n\nQuestion: {query}\nAnswer:",
+    prompt = (
+    f"Context:\n{context}\n" +
+    '\n'.join(relevant_chunks) + 
+    f"\n\nQuestion: {query}\nAnswer:"
+)
+
     return prompt
 
 def load_history():
