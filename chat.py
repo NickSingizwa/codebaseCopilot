@@ -1,6 +1,7 @@
 import os
 import json
 import zipfile
+import shutil
 import streamlit as st
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
@@ -17,6 +18,7 @@ client = OpenAI(
 
 UPLOAD_FOLDER = 'uploads'
 HISTORY_FILE = 'history.json'
+EMBEDDINGS_FILE = 'embeddings.json'
 
 def read_combined_codebase(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -82,13 +84,11 @@ def format_response_with_code(response):
 def generate_codex_prompt(query, embeddings, history):
     relevant_chunks = find_relevant_chunks(query, embeddings)
     context = "\n".join([f"{h['role']}: {h['content']}" for h in history])
-    # prompt = f"Context:\n{context}\n{'\n'.join(relevant_chunks)}\n\nQuestion: {query}\nAnswer:",
     prompt = (
-    f"Context:\n{context}\n" +
-    '\n'.join(relevant_chunks) + 
-    f"\n\nQuestion: {query}\nAnswer:"
-)
-
+        f"Context:\n{context}\n" +
+        '\n'.join(relevant_chunks) + 
+        f"\n\nQuestion: {query}\nAnswer:"
+    )
     return prompt
 
 def load_history():
@@ -108,8 +108,15 @@ def clear_history():
     if os.path.exists(HISTORY_FILE):
         os.remove(HISTORY_FILE)
 
+def delete_uploads_folder():
+    if os.path.exists(UPLOAD_FOLDER):
+        shutil.rmtree(UPLOAD_FOLDER)
+
 def main():
     st.title('Javascript Codebase Copilot')
+
+    # Delete uploads folder when the application starts
+    delete_uploads_folder()
 
     # Initialize session state for the query, response, and file processing status
     if 'query' not in st.session_state:
@@ -121,9 +128,13 @@ def main():
     if 'processing_file' not in st.session_state:
         st.session_state.processing_file = False
 
+    # Ensure uploads folder exists
+    if not os.path.exists(UPLOAD_FOLDER):
+        os.makedirs(UPLOAD_FOLDER)
+
     file = st.file_uploader("Upload your codebase (only zip file is allowed)", type=['zip'])
     history = load_history()
-    embeddings_file_path = os.path.join(UPLOAD_FOLDER, 'embeddings.json')
+    embeddings_file_path = os.path.join(UPLOAD_FOLDER, EMBEDDINGS_FILE)
 
     if file is not None and not st.session_state.file_uploaded:
         st.session_state.processing_file = True
@@ -131,34 +142,45 @@ def main():
         with open(file_path, 'wb') as f:
             f.write(file.getvalue())
 
-        # Clear history when a new file is uploaded
-        clear_history()
-        history = []
+        with st.spinner("Processing the uploaded file. Please wait..."):
+            # Clear history when a new file is uploaded
+            clear_history()
+            history = []
 
-        # Unzip the file
-        with zipfile.ZipFile(file_path, 'r') as zip_ref:
-            zip_ref.extractall(UPLOAD_FOLDER)
-        
-        # Read and process files
-        codebase_data = read_files(UPLOAD_FOLDER)
-        combined_codebase_path = os.path.join(UPLOAD_FOLDER, 'combined_codebase.txt')
-        with open(combined_codebase_path, 'w', encoding='utf-8') as f:
-            f.write(codebase_data)
-        
-        # Create embeddings
-        embeddings = create_embeddings_for_codebase(codebase_data)
-        with open(embeddings_file_path, 'w', encoding='utf-8') as f:
-            json.dump(embeddings, f)
-        
-        st.success('File successfully uploaded and processed')
-        st.session_state.file_uploaded = True
-        st.session_state.processing_file = False
+            # Unzip the file
+            with zipfile.ZipFile(file_path, 'r') as zip_ref:
+                zip_ref.extractall(UPLOAD_FOLDER)
+            
+            # Read and process files
+            codebase_data = read_files(UPLOAD_FOLDER)
+            combined_codebase_path = os.path.join(UPLOAD_FOLDER, 'combined_codebase.txt')
+            with open(combined_codebase_path, 'w', encoding='utf-8') as f:
+                f.write(codebase_data)
+            
+            # Create embeddings if they don't already exist
+            if not os.path.exists(embeddings_file_path):
+                embeddings = create_embeddings_for_codebase(codebase_data)
+                with open(embeddings_file_path, 'w', encoding='utf-8') as f:
+                    json.dump(embeddings, f)
+            
+            st.success('File successfully uploaded and processed')
+            st.session_state.file_uploaded = True
+            st.session_state.processing_file = False
 
     if st.session_state.processing_file:
         st.info("Processing the uploaded file. Please wait...")
     elif st.session_state.file_uploaded or os.path.exists(embeddings_file_path):
-        query = st.text_input('Enter your prompt:', key='query', on_change=lambda: st.session_state.update(ask_disabled=not st.session_state.query.strip()))
-        # query = st.text_area('Enter your prompt:', key='query', height=70, on_change=lambda: st.session_state.update(ask_disabled=not st.session_state.query.strip()))
+        st.markdown(
+            """
+            <style>
+            .custom-text-input textarea {
+                height: 100px !important;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        query = st.text_input('Enter your prompt:', key='query', on_change=lambda: st.session_state.update(ask_disabled=not st.session_state.query.strip()), placeholder='Type your prompt here...', className="custom-text-input")
         ask_button = st.button('Ask', key='ask', disabled=not st.session_state.query.strip())
 
         if ask_button:
@@ -169,16 +191,14 @@ def main():
                 prompt = generate_codex_prompt(query, embeddings, history)
                 response = ask_codex(prompt)
                 formatted_response = format_response_with_code(response)
-                st.session_state.response = formatted_response
+                st.session_state.response = response
 
                 history.append({'role': 'user', 'content': query})
                 history.append({'role': 'assistant', 'content': response})
                 save_history(history)
 
         if st.session_state.response:
-            st.markdown(f"### Response:\n```\n{st.session_state.response}\n```")
+            st.text_area('Response:', value=st.session_state.response, height=400, key='response_textarea', disabled=True)
 
 if __name__ == '__main__':
-    if not os.path.exists(UPLOAD_FOLDER):
-        os.makedirs(UPLOAD_FOLDER)
     main()
