@@ -158,10 +158,9 @@ def main():
                 f.write(codebase_data)
             
             # Create embeddings if they don't already exist
-            if not os.path.exists(embeddings_file_path):
-                embeddings = create_embeddings_for_codebase(codebase_data)
-                with open(embeddings_file_path, 'w', encoding='utf-8') as f:
-                    json.dump(embeddings, f)
+            embeddings = create_embeddings_for_codebase(codebase_data)
+            with open(embeddings_file_path, 'w', encoding='utf-8') as f:
+                json.dump(embeddings, f)
             
             st.success('File successfully uploaded and processed')
             st.session_state.file_uploaded = True
