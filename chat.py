@@ -185,17 +185,20 @@ def main():
 
         if ask_button:
             with st.spinner('Processing...'):
-                with open(embeddings_file_path, 'r', encoding='utf-8') as f:
-                    embeddings = json.load(f)
+                if os.path.exists(embeddings_file_path):
+                    with open(embeddings_file_path, 'r', encoding='utf-8') as f:
+                        embeddings = json.load(f)
 
-                prompt = generate_codex_prompt(query, embeddings, history)
-                response = ask_codex(prompt)
-                formatted_response = format_response_with_code(response)
-                st.session_state.response = response
+                    prompt = generate_codex_prompt(query, embeddings, history)
+                    response = ask_codex(prompt)
+                    formatted_response = format_response_with_code(response)
+                    st.session_state.response = response
 
-                history.append({'role': 'user', 'content': query})
-                history.append({'role': 'assistant', 'content': response})
-                save_history(history)
+                    history.append({'role': 'user', 'content': query})
+                    history.append({'role': 'assistant', 'content': response})
+                    save_history(history)
+                else:
+                    st.error("Embeddings file not found. Please upload and process the codebase first.")
 
         if st.session_state.response:
             st.text_area('Response:', value=st.session_state.response, height=400, key='response_textarea', disabled=True)
