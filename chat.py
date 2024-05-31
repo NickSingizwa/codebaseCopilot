@@ -180,7 +180,7 @@ def main():
             """,
             unsafe_allow_html=True,
         )
-        query = st.text_input('Enter your prompt:', key='query', on_change=lambda: st.session_state.update(ask_disabled=not st.session_state.query.strip()), placeholder='Type your prompt here...', className="custom-text-input")
+        query = st.text_input('Enter your prompt:', key='query', on_change=lambda: st.session_state.update(ask_disabled=not st.session_state.query.strip()), placeholder='Type your prompt here...')
         ask_button = st.button('Ask', key='ask', disabled=not st.session_state.query.strip())
 
         if ask_button:
